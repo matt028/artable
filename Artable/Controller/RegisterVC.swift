@@ -55,22 +55,48 @@ class RegisterVC: UIViewController {
         }
     }
     
+    
+    // Create User
     @IBAction func registerBtnPressed(_ sender: Any) {
         guard let email = emailTxt.text, email.isNotEmpty,
-              let username = usernameTxt.text, username.isNotEmpty,
-              let password = passwordTxt.text, password.isNotEmpty else { return }
+            let username = usernameTxt.text, username.isNotEmpty,
+            let password = passwordTxt.text, password.isNotEmpty else {
+                simpleAlert(title: "Error", message: "Please fill out all fields.")
+                return
+        }
+        
+        guard let confirmPass = confirmPassTxt.text, confirmPass == password else {
+            simpleAlert(title: "Error", message: "Passwords do not match.")
+            return
+        }
         
         activityIndicator.startAnimating()
         
-        Auth.auth().createUser(withEmail: email, password: password) { (authResult, error) in
+        guard let authUser = Auth.auth().currentUser else { return }
+        
+        // Linking an anonymous account with email/password
+        let credential = EmailAuthProvider.credential(withEmail: email, password: password)
+        authUser.linkAndRetrieveData(with: credential) { (result, error) in
             if let error = error {
-                debugPrint(error)
+                Auth.auth().handleFireAuthError(error: error, vc: self)
+                debugPrint(error.localizedDescription)
                 return
             }
             
             self.activityIndicator.stopAnimating()
-            print("Successfully Registered New User!")
+            self.dismiss(animated: true, completion: nil)
         }
+        
+        // Sign in with email/password
+//        Auth.auth().createUser(withEmail: email, password: password) { (authResult, error) in
+//            if let error = error {
+//                debugPrint(error)
+//                return
+//            }
+//
+//            self.activityIndicator.stopAnimating()
+//            self.dismiss(animated: true, completion: nil)
+//        }
     }
     
 
